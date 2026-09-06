@@ -32,7 +32,7 @@ permissions:
 env:
   # The one variable that separates the arms: on baseline, action-checkout
   # skips its Set up Chalk step entirely.
-  CHALK_ON: ${{ github.event_name == 'workflow_dispatch' && inputs.leg != 'baseline' }}
+  CHALK_ON: ${{ inputs.leg == 'instrumented' }}
 
 run-name: "CI ${{ inputs.leg || 'push' }} ${{ inputs.racecar_run }}"
 
@@ -51,7 +51,7 @@ jobs:
       # On pull_request the filter reads changed files via the API (no checkout);
       # on push it needs a local git history to diff against.
       - name: Checkout
-        if: github.event_name == 'push'
+        if: ${{ 'push' == 'push' }}
         uses: crashappsec/action-checkout@main
         with:
           chalk: ${{ env.CHALK_ON }}
@@ -94,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changes
     # Pushes to main always run everything: they keep the caches that PRs restore from warm.
-    if: github.event_name != 'pull_request' || needs.changes.outputs.frontend == 'true'
+    if: ${{ 'push' != 'pull_request' || needs.changes.outputs.frontend == 'true' }}
     steps:
       - name: Checkout
         uses: crashappsec/action-checkout@main
@@ -150,7 +150,7 @@ jobs:
     name: Backend Checks
     runs-on: ${{ matrix.os }}
     needs: changes
-    if: github.event_name != 'pull_request' || needs.changes.outputs.backend == 'true'
+    if: ${{ 'push' != 'pull_request' || needs.changes.outputs.backend == 'true' }}
     strategy:
       fail-fast: false
       matrix:
